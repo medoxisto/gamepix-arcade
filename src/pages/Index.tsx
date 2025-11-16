@@ -20,20 +20,19 @@ interface Game {
 }
 
 interface GameApiResponse {
-  data: Array<{
+  items: Array<{
     id: string;
     title: string;
     description: string;
-    thumbImg: string;
+    banner_image: string;
+    image: string;
     url: string;
     width: number;
     height: number;
-    tags: string[];
+    category: string;
   }>;
-  pagination: {
-    page: number;
-    total: number;
-  };
+  next_url?: string;
+  last_page_url?: string;
 }
 
 const fetchGames = async (page: number): Promise<GameApiResponse> => {
@@ -63,16 +62,20 @@ const Index = () => {
   }, [error]);
 
   const games: Game[] =
-    data?.data?.map((game) => ({
+    data?.items?.map((game) => ({
       id: game.id,
       title: game.title,
       description: game.description,
-      thumbnailUrl: game.thumbImg,
+      thumbnailUrl: game.banner_image,
       url: game.url,
       width: game.width,
       height: game.height,
-      tags: game.tags || [],
+      tags: [game.category],
     })) || [];
+
+  const totalPages = data?.last_page_url 
+    ? parseInt(new URL(data.last_page_url).searchParams.get('page') || '1')
+    : 1;
 
   const filteredGames = games.filter(
     (game) =>
@@ -86,7 +89,7 @@ const Index = () => {
   };
 
   const handleNextPage = () => {
-    if (data?.pagination.total && currentPage < data.pagination.total) {
+    if (currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -146,11 +149,11 @@ const Index = () => {
                   Previous
                 </Button>
                 <span className="text-muted-foreground">
-                  Page {currentPage} of {data?.pagination.total || 1}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <Button
                   onClick={handleNextPage}
-                  disabled={currentPage === data?.pagination.total}
+                  disabled={currentPage === totalPages}
                   variant="outline"
                   size="lg"
                 >
