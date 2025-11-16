@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { SearchBar } from "@/components/SearchBar";
+import { CategoryFilter } from "@/components/CategoryFilter";
 import { GameCard } from "@/components/GameCard";
 import { GameModal } from "@/components/GameModal";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, TrendingUp, Star, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface Game {
@@ -49,6 +51,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["games", currentPage],
@@ -77,12 +80,23 @@ const Index = () => {
     ? parseInt(new URL(data.last_page_url).searchParams.get('page') || '1')
     : 1;
 
-  const filteredGames = games.filter(
-    (game) =>
+  const filteredGames = games.filter((game) => {
+    const matchesSearch =
       game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       game.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      game.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      game.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory =
+      selectedCategory === "all" ||
+      game.tags.some((tag) => tag.toLowerCase().includes(selectedCategory.toLowerCase()));
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Separate games into sections
+  const trendingGames = filteredGames.slice(0, 8);
+  const newGames = filteredGames.slice(8, 16);
+  const popularGames = filteredGames.slice(16, 24);
 
   const handlePlayGame = (game: Game) => {
     setSelectedGame(game);
@@ -122,7 +136,17 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Games Grid */}
+      {/* Category Filter */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <CategoryFilter 
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+      </section>
+
+      {/* Game Sections */}
       <section className="py-12">
         <div className="container mx-auto px-4">
           {isLoading ? (
@@ -131,10 +155,59 @@ const Index = () => {
             </div>
           ) : filteredGames.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredGames.map((game) => (
-                  <GameCard key={game.id} game={game} onPlay={handlePlayGame} />
-                ))}
+              {/* Trending Games */}
+              {trendingGames.length > 0 && (
+                <div id="trending" className="mb-16">
+                  <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                    <h2 className="text-3xl font-bold">Trending Games</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {trendingGames.map((game) => (
+                      <GameCard key={game.id} game={game} onPlay={handlePlayGame} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Games */}
+              {newGames.length > 0 && (
+                <div id="new" className="mb-16">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Clock className="h-6 w-6 text-primary" />
+                    <h2 className="text-3xl font-bold">New Games</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {newGames.map((game) => (
+                      <GameCard key={game.id} game={game} onPlay={handlePlayGame} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Popular Games */}
+              {popularGames.length > 0 && (
+                <div id="popular" className="mb-16">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Star className="h-6 w-6 text-primary" />
+                    <h2 className="text-3xl font-bold">Popular Games</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {popularGames.map((game) => (
+                      <GameCard key={game.id} game={game} onPlay={handlePlayGame} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* All Games Grid */}
+              <div className="mb-16">
+                <h2 className="text-3xl font-bold mb-6">All Games</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredGames.map((game) => (
+                    <GameCard key={game.id} game={game} onPlay={handlePlayGame} />
+                  ))}
+                </div>
               </div>
 
               {/* Pagination */}
@@ -171,6 +244,8 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      <Footer />
 
       {/* Game Modal */}
       <GameModal
