@@ -63,7 +63,7 @@ const Index = () => {
   }, [error]);
 
   const games: Game[] =
-    data?.data.map((game) => ({
+    data?.data?.map((game) => ({
       id: game.id,
       title: game.title,
       description: game.description,
