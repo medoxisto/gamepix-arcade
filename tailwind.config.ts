@@ -57,6 +57,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "game-card": {
+          DEFAULT: "hsl(var(--game-card-bg))",
+          hover: "hsl(var(--game-card-hover))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
